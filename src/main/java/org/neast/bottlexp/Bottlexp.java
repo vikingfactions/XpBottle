@@ -31,8 +31,8 @@ public final class Bottlexp extends JavaPlugin implements Listener {
         this.saveDefaultConfig();
 
         // Register the command executors
-        this.getCommand("xpbottle").setExecutor(new XPBottleCommand());
-        this.getCommand("xpbottle reload").setExecutor(new ReloadXPConfigCommand());
+        this.getCommand("xpvoucher").setExecutor(new XPBottleCommand());
+        this.getCommand("xpvoucher reload").setExecutor(new ReloadXPConfigCommand());
 
         // Register the event listener
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -44,7 +44,7 @@ public final class Bottlexp extends JavaPlugin implements Listener {
     }
 
     private String formatMessage(String message) {
-        String prefix = getConfig().getString("prefix", "&7[&bXPBottle&7] ");
+        String prefix = getConfig().getString("prefix", "&7[&bXPVoucher&7] ");
         return ChatColor.translateAlternateColorCodes('&', prefix + message);
     }
 
@@ -74,7 +74,7 @@ public final class Bottlexp extends JavaPlugin implements Listener {
                 if (!player.isOp() && lastUseTime.containsKey(playerId)) {
                     long lastUse = lastUseTime.get(playerId);
                     long currentTime = System.currentTimeMillis();
-                    long cooldown = 900000; // 15 minutes in milliseconds
+                    long cooldown = 0; // 15 minutes in milliseconds
 
                     if (currentTime - lastUse < cooldown) {
                         long timeLeft = cooldown - (currentTime - lastUse);
@@ -83,11 +83,11 @@ public final class Bottlexp extends JavaPlugin implements Listener {
                     }
                 }
 
-                int levels = player.getLevel();
-                if (levels > 0) {
+                int exp = XPUtils.getPlayerExp(player);
+                if (exp > 0) {
                     // Remove XP levels only if the XP bottle can be given successfully
-                    if (giveXPBottle(player, levels)) {
-                        player.giveExpLevels(-levels);
+                    if (giveXPBottle(player, exp)) {
+                        player.giveExp(-exp);
                         player.sendMessage(formatMessage(ChatColor.GREEN + getConfig().getString("messages.convert_success")));
 
                         // Update the last use time
@@ -127,14 +127,14 @@ public final class Bottlexp extends JavaPlugin implements Listener {
                 List<String> lore = meta.getLore();
                 if (lore != null && !lore.isEmpty()) {
                     String loreLine = lore.get(0);
-                    int levels = extractLevelsFromLore(loreLine);
-                    if (levels > 0) {
-                        player.giveExpLevels(levels);
+                    int exp = extractLevelsFromLore(loreLine);
+                    if (exp > 0) {
+                        XPUtils.changePlayerExp(player, exp);
                         String xpRecoveredMessage = getConfig().getString("messages.xp_recovered");
                         if (xpRecoveredMessage != null) {
-                            player.sendMessage(formatMessage(ChatColor.GREEN + xpRecoveredMessage.replace("{levels}", String.valueOf(levels))));
+                            player.sendMessage(formatMessage(ChatColor.GREEN + xpRecoveredMessage.replace("{levels}", String.valueOf(exp))));
                         } else {
-                            player.sendMessage(formatMessage(ChatColor.GREEN + "Vous avez récupéré " + levels + " niveaux d'XP !"));
+                            player.sendMessage(formatMessage(ChatColor.GREEN + "You received " + exp + " experience!"));
                         }
                         if (item.getAmount() > 1) {
                             item.setAmount(item.getAmount() - 1);
@@ -150,7 +150,7 @@ public final class Bottlexp extends JavaPlugin implements Listener {
     private int extractLevelsFromLore(String loreLine) {
         String[] parts = loreLine.split(" ");
         try {
-            return Integer.parseInt(parts[1]);
+            return Integer.parseInt(parts[3]);
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
             return 0;
         }
@@ -169,7 +169,7 @@ public final class Bottlexp extends JavaPlugin implements Listener {
         }
     }
 
-    private boolean giveXPBottle(Player player, int levels) {
+    private boolean giveXPBottle(Player player, int exp) {
         String itemTypeString = getConfig().getString("item.type", "PAPER");
         Material itemType = Material.matchMaterial(itemTypeString);
         if (itemType == null) {
@@ -186,7 +186,8 @@ public final class Bottlexp extends JavaPlugin implements Listener {
             if (meta.hasEnchant(Enchantment.LUCK)) {
                 meta.removeEnchant(Enchantment.LUCK);
             }
-            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', "&7Contient " + levels + " niveaux d'XP")));
+            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', "&fThis voucher contains " + exp + " experience")
+                    ,ChatColor.translateAlternateColorCodes('&', "&7Create an xp voucher using /xpvoucher!")));
 
             // Set custom model data
             int customModelData = getConfig().getInt("item.custom_model_data", 0);

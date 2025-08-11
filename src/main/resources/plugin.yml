@@ -6,13 +6,13 @@ main: org.neast.bottlexp.Bottlexp
 api-version: 1.19
 
 commands:
-  xpbottle:
+  xpvoucher:
     description: Convertit votre XP en papier enchanté.
-    usage: /xpbottle
+    usage: /xpvoucher
     permission: bottlexp.use
-  xpbottle reload:
+  xpvoucher reload:
     description: Recharge la configuration de BottleXP.
-    usage: /xpbottle reload
+    usage: /xpvoucher reload
     permission: bottlexp.reload
 
 permissions:

@@ -44,7 +44,7 @@ tasks.withType(JavaCompile) {
         options.release.set(targetJavaVersion)
     }
 }
-
+/*
 // Configuration du filtrage des ressources
 processResources {
     def props = [version: version]
@@ -68,3 +68,4 @@ tasks.register('copyJar', Copy) {
 tasks.named('build') {
     finalizedBy('copyJar')
 }
+*/
